@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+        html,
+        body {
+            padding: 0;
+            margin: 0;
+            height: 100%;
+            width: 100%;
+            display: flex;
+        }
+
+        textarea {
+            outline: none;
+        }
+
+        .left {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            width: 49%;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+
+        #codeStr,
+        #itemStr,
+        #result,
+        .left,
+        .right {
+            flex: 1;
+        }
+
+        .right {
+            overflow: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <div class='left'>
+        <textarea name="" id="codeStr"></textarea>
+        <textarea name="" id="itemStr"></textarea>
+        <div id="result"></div>
+
+    </div>
+    <div class='right'>
+
+    </div>
+
+    <script src='./tokenizer.js'></script>
+    <script src='./parse.js'></script>
+    <script src='./transform.js'></script>
+    <script src='./generator.js'></script>
+    <script>
+        let ast
+        let astStr
+        let tokens
+        let _codeStr =
+            `
+        my name is {{name}}
+        my address is in {{address.city}} {{address.street}}
+        `
+        let _itemStr =
+            `
+        {
+            "name": "evan",
+            "address":{
+                "city":"深圳",
+                "street":"坂田街道"
+            }
+        }
+        `
+        let item
+        let resultStr
+        let codeStr = document.querySelector('#codeStr');
+        codeStr.innerText = _codeStr
+        codeStr.focus()
+        let itemStr = document.querySelector('#itemStr');
+        let result = document.querySelector('#result');
+        let right = document.querySelector('.right');
+        itemStr.innerText = _itemStr
+        codeStr.addEventListener('input', function (event) {
+            runOne(this.value)
+        })
+        itemStr.addEventListener('input', function (event) {
+            _itemStr = this.value;
+            runOne(codeStr.value)
+        })
+
+        function runOne(str) {
+            tokens = tokenizer(str);
+            ast = parser(tokens);
+            astStr = JSON.stringify(ast, undefined, 2);
+            right.innerText = astStr
+            try {
+                item = JSON.parse(_itemStr)
+            } catch {
+                console.log('对象格式错误')
+                itemStr.style.border = '1px solid red';
+                setTimeout(function () {
+                    itemStr.style.borderColor = '#ccc'
+                }, 1000);
+            }
+            ast = transform(ast, item)
+            resultStr = generator(ast);
+            result.innerText = resultStr
+        }
+        // 初始化执行一次
+        runOne(_codeStr)
+    </script>
+</body>
+
+</html>
