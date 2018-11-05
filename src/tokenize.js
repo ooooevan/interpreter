@@ -1,8 +1,6 @@
 /**
- * 
- * identifier 声明符
- * literal  字面量
- * Property  属性，对象中的key
+ * 关键字：break、case、catch、continue、default、delete、do、else、finally、for、function、if、in、instanceof、new、return、switch、this、throw、try、typeof、var、void、while、with
+ * 类型：Keyword、Punctuator、Numeric、Identifier、String
  * 
  */
 

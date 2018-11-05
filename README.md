@@ -9,5 +9,6 @@
 ├─babel-transform-pre-calculate    #简单预计算插件
 ├─template      #模板引擎，暂时只支持{{name}},不支持其他指令
 ├─src           #编写解释器的源码
+├─jsonParser           #一个json解析器
 ├─test          #测试源码
 ```
