@@ -38,6 +38,15 @@
   )
 
   参考：https://wangdoc.com/javascript/stdlib/json.html
+
+  !目前存在一个问题：下面的情况会改变原值（还不知道如何高效复制一份副本）
+  let obj = {age:18}
+  function f(key, value){
+    if(value === 18)
+    return 20
+  }
+  json.stringify(obj,f)
+  console.log(obj); //{age:20}
  */
 
 const BEGIN_OBJECT = 'BEGIN_OBJECT'
@@ -371,7 +380,12 @@ const json = {
   }
 }
 
-
+let obj1 = {age:18}
+  function f(key, value){
+    if(value === 18) return 20
+    return value
+  }
+  json.stringify(obj1,f)
 if (module) {
   module.exports = json
 }
