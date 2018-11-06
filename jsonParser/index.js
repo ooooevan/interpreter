@@ -1,4 +1,3 @@
-
 /**
  * 
  * JSON:
@@ -15,7 +14,30 @@
   JSON.parse('[1, 5, "false"]') // [1, 5, "false"]
   JSON.parse('null') // null
 
+  JSON.stringify:
+  JSON.stringify('abc') // ""abc""
+  JSON.stringify(1) // "1"
+  JSON.stringify(false) // "false"
+  JSON.stringify([]) // "[]"
+  JSON.stringify({}) // "{}"
+  JSON.stringify(/foo/) // "{}"
+  JSON.stringify('foo') === "\"foo\"" // true
+  对象的属性是undefined、函数或 XML 对象，该属性会被JSON.stringify过滤。(数组返回null)
+  JSON.stringify方法会忽略对象的不可遍历属性。
+  第二个参数，若是数组，过滤对象属性
+  JSON.stringify(['a', 'b'], ['0'])   // "["a","b"]"
+  JSON.stringify({0: 'a', 1: 'b'}, ['0'])   // "{"0":"a"}"  注意'0'和0要匹配
+  第二个参数，若是函数，自定义返回值（不会改原值）
+  遍历顺序是从整体递归到每个key。
+  
+  第三个参数：格式化参数
 
+  如果对象有toJSON方法，则忽略其他属性只处理这个(toJSON方法可以让JSON.stringify对正则等对象值改变：
+    RegExp.prototype.toJSON = RegExp.prototype.toString;
+    JSON.stringify(/foo/) // ""/foo/""
+  )
+
+  参考：https://wangdoc.com/javascript/stdlib/json.html
  */
 
 const BEGIN_OBJECT = 'BEGIN_OBJECT'
@@ -23,7 +45,7 @@ const END_OBJECT = 'END_OBJECT'
 const BEGIN_ARRAY = 'BEGIN_ARRAY'
 const END_ARRAY = 'END_ARRAY'
 const NULL = 'NULL'
-const NUMBER = 'NUMBER'  //必须是十进制
+const NUMBER = 'NUMBER' //必须是十进制
 const STRING = 'STRING'
 const BOOLEAN = 'BOOLEAN'
 const SEP_COLON = 'SEP_COLON' // 冒号
@@ -126,7 +148,7 @@ function tokenizie(str) {
           i++;
           while (/[0-9.]/.test(str[i])) {
             // 不能使用零开头的数字
-            if(tempStr === '0' && (str[i] !== '.')){
+            if (tempStr === '0' && (str[i] !== '.')) {
               throw new Error('Unexpected token ' + currentChar + ' in JSON at position ' + i)
             }
             tempStr += str[i];
@@ -147,7 +169,7 @@ function parse(tokens) {
   let i = 0;
   for (; i < tokens.length; i++) {
     token = tokens[i];
-    switch(token.type){
+    switch (token.type) {
       case BEGIN_OBJECT:
         return parseObject()
       case BEGIN_ARRAY:
@@ -170,7 +192,7 @@ function parse(tokens) {
     let key;
     do {
       token = tokens[++i];
-      if(token.type === END_OBJECT){
+      if (token.type === END_OBJECT) {
         return object;
       }
       // key必须是string
@@ -207,9 +229,9 @@ function parse(tokens) {
 
   function parseArray() {
     let array = [];
-    do{
+    do {
       token = tokens[++i];
-      switch(token.type){
+      switch (token.type) {
         case END_ARRAY:
           return array;
         case BEGIN_OBJECT:
@@ -225,7 +247,7 @@ function parse(tokens) {
           array.push(null);
           continue;
         case BOOLEAN:
-          array.push(token.value === 'false' ? false:true);
+          array.push(token.value === 'false' ? false : true);
           continue;
         case STRING:
           array.push(token.value);
@@ -233,7 +255,7 @@ function parse(tokens) {
         default:
           throw new Error('Unexpected token ' + token.value + ' in JSON at position ' + i);
       }
-    }while(tokens[i+1] && tokens[++i].type === SEP_COMMA)
+    } while (tokens[i + 1] && tokens[++i].type === SEP_COMMA)
     token = tokens[i];
     if (token.type !== END_ARRAY) {
       throw new Error('Unexpected token ' + token.value + ' in JSON at position ' + i);
@@ -242,49 +264,113 @@ function parse(tokens) {
   }
 }
 
-function stringify(obj){
-  if(/Undefined|Function/.test(toString.call())){
+function stringify(obj, selected, format, isInner, index) {
+  const type = toString.call(obj);
+  if (/Undefined|Function/.test(type)) {
     // 无返回
     return;
   }
-  const type = toString.call(obj);
-  if(/Boolean|Null/.test(type)){
+  if (/Boolean|Null/.test(type)) {
     return obj + '';
   }
-  if(/Number/.test(type)){
+  if (/Number/.test(type)) {
     // 注意NaN
-    if(obj !== obj) return 'null';
+    if (obj !== obj) return 'null';
     return obj + '';
   }
-  if(/String/.test(type)){
+  if (/String/.test(type)) {
     // 字符串加上双引号
     return '\"' + obj + '\"';
   }
-  if(/Object|Array/.test(type)){
-    if(/Object/.test(type)){
-      // 是一个对象
-
-    }else{
-      // 是一个数组
-      
+  if (/Object|Array/.test(type)) {
+    let preStr = ''
+    let aftStr = ''
+    if (format && typeof format === 'number') {
+      preStr = '\n' + new Array((index + 1) * 2 + 1).join(' ');
+      aftStr = '\n' + new Array(index * 2 + 1).join(' ');
+    } else if (format && typeof format === 'string') {
+      preStr = '\n' + new Array(index + 2).join(format);
+      aftStr = '\n' + new Array(index + 1).join(format);
     }
-  }else{
+    if (/Object/.test(type)) {
+      // 是一个对象, 遍历可遍历属性
+      let temp = ''
+      if (/Function/.test(toString.call(selected)) && !isInner) {
+        obj = selected('', obj);
+      }
+      if (obj.toJSON && typeof obj.toJSON === 'function') {
+        obj = obj.toJSON();
+        if (!/Object|Array/.test(toString.call(obj))) {
+          return '"' + obj + '"';
+        }
+      }
+      for (let key in obj) {
+        if (/Function/.test(toString.call(selected))) {
+          obj[key] = selected(key, obj[key]);
+        }
+        let value = stringify(obj[key], selected, format, true, index + 1);
+        if (typeof value === 'undefined') {
+          // 是undefined，过滤
+        } else {
+          if (/Array/.test(toString.call(selected))) {
+            if (selected.includes(key)) {
+              temp += (preStr + '"' + key + '"');
+              temp += ':';
+              temp += value;
+              temp += ','
+            }
+          } else {
+            temp += (preStr + '"' + key + '"');
+            temp += ':';
+            temp += value;
+            temp += ','
+          }
+        }
+      }
+      temp = temp.substr(0, temp.length - 1);
+      return '{' + temp + aftStr + '}';
+    } else {
+      // 是一个数组
+      let temp = ''
+      if (/Function/.test(toString.call(selected)) && !isInner) {
+        obj = selected('', obj);
+      }
+      for (let key in obj) {
+        if (/Function/.test(toString.call(selected))) {
+          obj[key] = selected(key, obj[key]);
+        }
+        let value = stringify(obj[key], selected, format, true, index + 1);
+        if (typeof value === 'undefined') {
+          // 是undefined，返回null
+          temp += (preStr + null);
+          temp += ','
+        } else {
+          temp += (preStr + value);
+          temp += ','
+        }
+      }
+      temp = temp.substr(0, temp.length - 1);
+      return '[' + temp + aftStr + ']';
+    }
+  } else {
     // 其他类型都返回空对象字符串，如RegExp、ArrayBuffer等
     return '{}';
   }
 }
 
 const json = {
-  tokenizie: function (str) {
+  _tokenizie: function (str) {
     return tokenizie(str)
   },
-  parse: function (tokens) {
+  parse: function (str) {
+    const tokens = this._tokenizie(str);
     return parse(tokens)
   },
-  stringify: function (obj) {
-    return stringify(obj)
+  stringify: function (obj, selected, format) {
+    return stringify(obj, selected, format, false, 0)
   }
 }
+
 
 if (module) {
   module.exports = json
