@@ -19,4 +19,5 @@
 #### jsonParser目录
 自己实现了JSON对象，包括parse和stringify方法
 
-
+#### babel-transform-pre-calculate目录
+一个预计算插件，学习自[babel-plugin-pre-calculate-number](https://github.com/axetroy/babel-plugin-pre-calculate-number)
