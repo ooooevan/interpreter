@@ -9,10 +9,10 @@
  * 
  * 这个代码会经过3次BinaryExpression：
  * const day = 3600 * 1000 * 24;
- * ①：left:3600 * 1000  right:24
- * ②：left: 2600  right: 1000
- * ③：left: 3600000  right: 24
- * 有第三次是因为replace后对parentNode检测，递归检测，可能是BinaryExpression或UnaryExpression
+ * ①：left: 3600 * 1000;  right:24
+ * ②：left: 3600;  right: 1000
+ * ③：left: 3600000;  right: 24
+ * 有第三次是因为replace后对parentNode检测，递归检测，其类型可能是BinaryExpression或UnaryExpression
  * 
  * 一元运算符
  * UnaryExpression [operator, argument(NumericLiteral)]

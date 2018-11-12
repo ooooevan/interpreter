@@ -1,18 +1,18 @@
-const tokenize = require('../src/tokenize');
+const { tokenize, BooleanLiteral, EOF, Identifier, Keyword, NullLiteral, NumericLiteral, Punctuator, StringLiteral, RegularExpression, Template, Whitespace } = require('../src/tokenize');
 const test = require('ava').test;
 
 test('basic tokenize', t => {
     const code = 'var a = 1;'
     const tokens = tokenize(code);
     t.deepEqual(tokens, [
-        { type: 'identifier', value: 'var',},
-        { type: 'whitespace', value: ' ' },
-        { type: 'identifier', value: 'a' },
-        { type: 'whitespace', value: ' ' },
-        { type: 'operator', value: '=' },
-        { type: 'whitespace', value: ' ' },
-        { type: 'number', value: '1' },
-        { type: 'sep', value: ';' },
+        { type: Keyword, value: 'var',},
+        { type: Whitespace, value: ' ' },
+        { type: Identifier, value: 'a' },
+        { type: Whitespace, value: ' ' },
+        { type: Punctuator, value: '=' },
+        { type: Whitespace, value: ' ' },
+        { type: NumericLiteral, value: '1' },
+        { type: Punctuator, value: ';' },
     ])
 })
 
@@ -20,18 +20,18 @@ test('simple binary', t => {
     const code = 'var a = 1+2+3;'
     const tokens = tokenize(code);
     t.deepEqual(tokens, [
-        { type: 'identifier', value: 'var',},
-        { type: 'whitespace', value: ' ' },
-        { type: 'identifier', value: 'a' },
-        { type: 'whitespace', value: ' ' },
-        { type: 'operator', value: '=' },
-        { type: 'whitespace', value: ' ' },
-        { type: 'number', value: '1' },
-        { type: 'operator', value: '+' },
-        { type: 'number', value: '2' },
-        { type: 'operator', value: '+' },
-        { type: 'number', value: '3' },
-        { type: 'sep', value: ';' },
+        { type: Keyword, value: 'var',},
+        { type: Whitespace, value: ' ' },
+        { type: Identifier, value: 'a' },
+        { type: Whitespace, value: ' ' },
+        { type: Punctuator, value: '=' },
+        { type: Whitespace, value: ' ' },
+        { type: NumericLiteral, value: '1' },
+        { type: Punctuator, value: '+' },
+        { type: NumericLiteral, value: '2' },
+        { type: Punctuator, value: '+' },
+        { type: NumericLiteral, value: '3' },
+        { type: Punctuator, value: ';' },
     ])
 })
 
@@ -42,25 +42,25 @@ test('simple if statement', t => {
     }`
     const tokens = tokenize(code);
     t.deepEqual(tokens, [
-        { type: 'whitespace', value: '\n    ' },
-        { type: 'identifier', value: 'if',},
-        { type: 'whitespace', value: ' ' },
-        { type: 'parens', value: '(' },
-        { type: 'number', value: '1' },
-        { type: 'whitespace', value: ' ' },
-        { type: 'operator', value: '>' },
-        { type: 'whitespace', value: ' ' },
-        { type: 'number', value: '0' },
-        { type: 'parens', value: ')' },
-        { type: 'whitespace', value: ' ' },
-        { type: 'brace', value: '{' },
-        { type: 'whitespace', value: '\n        ' },
-        { type: 'identifier', value: 'a' },
-        { type: 'parens', value: '(' },
-        { type: 'parens', value: ')' },
-        { type: 'sep', value: ';' },
-        { type: 'whitespace', value: '\n    ' },
-        { type: 'brace', value: '}' },
+        { type: Whitespace, value: '\n    ' },
+        { type: Keyword, value: 'if',},
+        { type: Whitespace, value: ' ' },
+        { type: Punctuator, value: '(' },
+        { type: NumericLiteral, value: '1' },
+        { type: Whitespace, value: ' ' },
+        { type: Punctuator, value: '>' },
+        { type: Whitespace, value: ' ' },
+        { type: NumericLiteral, value: '0' },
+        { type: Punctuator, value: ')' },
+        { type: Whitespace, value: ' ' },
+        { type: Punctuator, value: '{' },
+        { type: Whitespace, value: '\n        ' },
+        { type: Identifier, value: 'a' },
+        { type: Punctuator, value: '(' },
+        { type: Punctuator, value: ')' },
+        { type: Punctuator, value: ';' },
+        { type: Whitespace, value: '\n    ' },
+        { type: Punctuator, value: '}' },
     ])
 })
 
@@ -69,11 +69,11 @@ test('simple string', t => {
     alert("function is good")`
     const tokens = tokenize(code);
     t.deepEqual(tokens, [
-        { type: 'whitespace', value: '\n    ' },
-        { type: 'identifier', value: 'alert',},
-        { type: 'parens', value: '(' },
-        { type: 'string', value: '"function is good"',},
-        { type: 'parens', value: ')' },
+        { type: Whitespace, value: '\n    ' },
+        { type: Identifier, value: 'alert',},
+        { type: Punctuator, value: '(' },
+        { type: StringLiteral, value: '"function is good"',},
+        { type: Punctuator, value: ')' },
     ])
 })
 
@@ -84,22 +84,22 @@ test('function declaration', t => {
     }`
     const tokens = tokenize(code);
     t.deepEqual(tokens, [
-        { type: 'whitespace', value: '\n    ' },
-        { type: 'identifier', value: 'function'},
-        { type: 'whitespace', value: ' ' },
-        { type: 'identifier', value: 'add1' },
-        { type: 'parens', value: '(' },
-        { type: 'identifier', value: 'a' },
-        { type: 'parens', value: ')' },
-        { type: 'brace', value: '{' },
-        { type: 'whitespace', value: '\n        ' },
-        { type: 'identifier', value: 'return' },
-        { type: 'whitespace', value: ' ' },
-        { type: 'identifier', value: 'a' },
-        { type: 'operator', value: '+' },
-        { type: 'number', value: '1' },
-        { type: 'whitespace', value: '\n    ' },
-        { type: 'brace', value: '}' },
+        { type: Whitespace, value: '\n    ' },
+        { type: Keyword, value: 'function'},
+        { type: Whitespace, value: ' ' },
+        { type: Identifier, value: 'add1' },
+        { type: Punctuator, value: '(' },
+        { type: Identifier, value: 'a' },
+        { type: Punctuator, value: ')' },
+        { type: Punctuator, value: '{' },
+        { type: Whitespace, value: '\n        ' },
+        { type: Keyword, value: 'return' },
+        { type: Whitespace, value: ' ' },
+        { type: Identifier, value: 'a' },
+        { type: Punctuator, value: '+' },
+        { type: NumericLiteral, value: '1' },
+        { type: Whitespace, value: '\n    ' },
+        { type: Punctuator, value: '}' },
     ])
 })
 
@@ -107,20 +107,34 @@ test('member function', t => {
     const code = `var a = Math.pow(2, 3)`
     const tokens = tokenize(code);
     t.deepEqual(tokens, [
-        { type: 'identifier', value: 'var',},
-        { type: 'whitespace', value: ' ' },
-        { type: 'identifier', value: 'a',},
-        { type: 'whitespace', value: ' ' },
-        { type: 'operator', value: '=' },
-        { type: 'whitespace', value: ' ' },
-        { type: 'identifier', value: 'Math',},
-        { type: 'symbol', value: '.' },
-        { type: 'identifier', value: 'pow',},
-        { type: 'parens', value: '(' },
-        { type: 'number', value: '2' },
-        { type: 'symbol', value: ',' },
-        { type: 'whitespace', value: ' ' },
-        { type: 'number', value: '3' },
-        { type: 'parens', value: ')' },
+        { type: Keyword, value: 'var',},
+        { type: Whitespace, value: ' ' },
+        { type: Identifier, value: 'a',},
+        { type: Whitespace, value: ' ' },
+        { type: Punctuator, value: '=' },
+        { type: Whitespace, value: ' ' },
+        { type: Identifier, value: 'Math',},
+        { type: Punctuator, value: '.' },
+        { type: Identifier, value: 'pow',},
+        { type: Punctuator, value: '(' },
+        { type: NumericLiteral, value: '2' },
+        { type: Punctuator, value: ',' },
+        { type: Whitespace, value: ' ' },
+        { type: NumericLiteral, value: '3' },
+        { type: Punctuator, value: ')' },
+    ])
+})
+test('calculate Punctuator', t => {
+    const code = `var a = i++`
+    const tokens = tokenize(code);
+    t.deepEqual(tokens, [
+        { type: Keyword, value: 'var',},
+        { type: Whitespace, value: ' ' },
+        { type: Identifier, value: 'a',},
+        { type: Whitespace, value: ' ' },
+        { type: Punctuator, value: '=' },
+        { type: Whitespace, value: ' ' },
+        { type: Identifier, value: 'i',},
+        { type: Punctuator, value: '++' },
     ])
 })
