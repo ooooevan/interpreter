@@ -46,48 +46,6 @@ function tokenizeCode(codeStr) {
   const tokens = [];
   for (var i = 0; i < codeStr.length; i++) {
     var currentChar = codeStr.charAt(i);
-    if (currentChar === ';') {
-      tokens.push({
-        type: Punctuator,
-        value: ';'
-      });
-      continue
-    }
-    if (currentChar === '(' || currentChar === ')') {
-      tokens.push({
-        type: Punctuator,
-        value: currentChar
-      });
-      continue
-    }
-    if (currentChar === '{' || currentChar === '}') {
-      tokens.push({
-        type: Punctuator,
-        value: currentChar
-      })
-      continue
-    }
-    if (currentChar === '>' || currentChar === '<') {
-      tokens.push({
-        type: Punctuator,
-        value: currentChar
-      });
-      continue
-    }
-    if (currentChar === '+') {
-      tokens.push({
-        type: Punctuator,
-        value: currentChar
-      });
-      continue
-    }
-    if (currentChar === '=') {
-      tokens.push({
-        type: Punctuator,
-        value: currentChar
-      });
-      continue
-    }
     if (currentChar === '"' || currentChar === "'") {
       //字符串的开始，要一直取值到字符串的结束
       const token = {
@@ -145,6 +103,10 @@ function tokenizeCode(codeStr) {
       };
       if(isKeyword(token.value)){
         token.type = Keyword
+      }else if(token.value === 'false' || token.value === 'true'){
+        token.type = BooleanLiteral
+      }else if(token.value === 'null'){
+        token.type = NullLiteral
       }
       tokens.push(token)
       continue;
@@ -166,15 +128,88 @@ function tokenizeCode(codeStr) {
       }
       continue;
     }
-    if(/[.,]/.test(currentChar)){
-      tokens.push({
-        type: Punctuator,
-        value: currentChar
-      });
-      continue
+    // 字符
+    switch(currentChar){
+      case '(':
+      case '{':
+      case ')':
+      case '}':
+      case ':':
+      case '[':
+      case ']':
+      case ',':
+      case ';':
+      case '?':
+      case '~':
+        tokens.push({
+          type: Punctuator,
+          value: currentChar
+        });
+        break;
+      case '.':
+        if(codeStr.charAt(i+1) === '.' && codeStr.charAt(i+2) === '.'){
+          tokens.push({
+            type: Punctuator,
+            value: '...'
+          });
+          i+=2;
+        }else{
+          tokens.push({
+            type: Punctuator,
+            value: currentChar
+          });
+        }
+        break;
+      default:
+        let str = codeStr.substr(i, 4);
+        if(str === '>>>='){
+          tokens.push({
+            type: Punctuator,
+            value: str
+          });
+          i+=3;
+          break;
+        }
+        str = codeStr.substr(i, 3);
+        if(str === '===' || str === '!==' || str === '>>>' ||
+        str === '<<=' || str === '>>=' || str === '**='){
+          tokens.push({
+            type: Punctuator,
+            value: str
+          });
+          i+=2;
+          break;
+        }
+        str = codeStr.substr(i, 2);
+        if(str === '&&' || str === '||' || str === '==' || str === '!=' ||
+        str === '+=' || str === '-=' || str === '*=' || str === '/=' ||
+        str === '++' || str === '--' || str === '<<' || str === '>>' ||
+        str === '&=' || str === '|=' || str === '^=' || str === '%=' ||
+        str === '<=' || str === '>=' || str === '=>' || str === '**'){
+          tokens.push({
+            type: Punctuator,
+            value: str
+          });
+          i+=1;
+          break;
+        }
+        if('<>=!+-*%&|^/'.indexOf(currentChar) > -1){
+          tokens.push({
+            type: Punctuator,
+            value: currentChar
+          });
+          break;
+        }
+      throw new Error('Unexpected ' + currentChar);
     }
+    // if(/[.,]/.test(currentChar)){
+    //   tokens.push({
+    //     type: Punctuator,
+    //     value: currentChar
+    //   });
+    //   continue
+    // }
     // 可扩充其他类型判断
-    throw new Error('Unexpected ' + currentChar);
   }
   return tokens;
 }

@@ -159,9 +159,6 @@ function calculate(arr){
   return resultNum.pop()
 }
 
-const code = '0.1 + 0.2'
-const right = transformExpression(code);
-const result = calculate(right);
 module.exports = {
   transformExpression,
   calculate

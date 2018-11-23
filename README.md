@@ -14,29 +14,33 @@
 ├─test          #测试源码
 ```
 
-#### src目录
+### src目录
 编写简单js解析器代码
 
 
-#### template目录
+### template目录
 参考实现的简单模板引擎，暂时只支持{{name}}这样插值，不支持其他复杂逻辑
 
-#### jsonParser目录
+### jsonParser目录
 自己实现了JSON对象，包括parse和stringify方法
 
-#### simple-calculator目录
+### simple-calculator目录
 自己实现的计算器，支持计算如下
 ```js
 (+1) + (10 - 4) * 3 / 2 + (-1)
 0.1 + 0.2
 ```
 
-#### babel-transform-pre-calculate目录
+### babel-transform-pre-calculate目录
 一个预计算插件，学习自[babel-plugin-pre-calculate-number](https://github.com/axetroy/babel-plugin-pre-calculate-number)
 
-#### 关于Big.js
+### 关于Big.js
 js浮点数用`Big.js`处理，也有类似的`bignumber.js`
 `Big.js`支持链式调用，所以计算后得到的还是Big对象，他的`valueOf`和`toString`方法都返回计算值字符串，所以只要在前面加`+`即可得到结果数值
 ```js
 0.3 === +Big('0.1').plus('0.2')  //true
 ```
+
+关于js浮点数
+[https://github.com/camsong/blog/issues/9](https://github.com/camsong/blog/issues/9)
+
