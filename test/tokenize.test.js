@@ -13,6 +13,7 @@ test('basic tokenize', t => {
         { type: Whitespace, value: ' ' },
         { type: NumericLiteral, value: '1' },
         { type: Punctuator, value: ';' },
+        { type: EOF, value: undefined },
     ])
 })
 
@@ -32,6 +33,7 @@ test('simple binary', t => {
         { type: Punctuator, value: '+' },
         { type: NumericLiteral, value: '3' },
         { type: Punctuator, value: ';' },
+        { type: EOF, value: undefined },
     ])
 })
 
@@ -61,6 +63,7 @@ test('simple if statement', t => {
         { type: Punctuator, value: ';' },
         { type: Whitespace, value: '\n    ' },
         { type: Punctuator, value: '}' },
+        { type: EOF, value: undefined },
     ])
 })
 
@@ -74,6 +77,7 @@ test('simple string', t => {
         { type: Punctuator, value: '(' },
         { type: StringLiteral, value: '"function is good"',},
         { type: Punctuator, value: ')' },
+        { type: EOF, value: undefined },
     ])
 })
 
@@ -100,6 +104,7 @@ test('function declaration', t => {
         { type: NumericLiteral, value: '1' },
         { type: Whitespace, value: '\n    ' },
         { type: Punctuator, value: '}' },
+        { type: EOF, value: undefined },
     ])
 })
 
@@ -122,6 +127,7 @@ test('member function', t => {
         { type: Whitespace, value: ' ' },
         { type: NumericLiteral, value: '3' },
         { type: Punctuator, value: ')' },
+        { type: EOF, value: undefined },
     ])
 })
 test('boolean null', t => {
@@ -142,6 +148,7 @@ test('boolean null', t => {
         { type: Whitespace, value: ' ' },
         { type: BooleanLiteral, value: 'true' },
         { type: Punctuator, value: ';' },
+        { type: EOF, value: undefined },
     ])
 })
 test('calculate Punctuator 1', t => {
@@ -156,6 +163,7 @@ test('calculate Punctuator 1', t => {
         { type: Whitespace, value: ' ' },
         { type: Identifier, value: 'i',},
         { type: Punctuator, value: '++' },
+        { type: EOF, value: undefined },
     ])
 })
 
@@ -170,6 +178,7 @@ test('Punctuator 2', t => {
         { type: Punctuator, value: '+=' },
         { type: Whitespace, value: ' ' },
         { type: NumericLiteral, value: '1',},
+        { type: EOF, value: undefined },
     ])
 })
 test('Punctuator 3', t => {
@@ -194,6 +203,7 @@ test('Punctuator 3', t => {
         { type: Whitespace, value: ' ' },
         { type: NumericLiteral, value: '3'},
         { type: Punctuator, value: ')' },
+        { type: EOF, value: undefined },
     ])
 })
 test('Punctuator 4', t => {
@@ -211,6 +221,7 @@ test('Punctuator 4', t => {
         { type: NumericLiteral, value: '1' },
         { type: Punctuator, value: ':' },
         { type: NumericLiteral, value: '2',},
+        { type: EOF, value: undefined },
     ])
 })
 test('Punctuator 5', t => {
@@ -232,6 +243,7 @@ test('Punctuator 5', t => {
         { type: NumericLiteral, value: '1' },
         { type: Punctuator, value: ':' },
         { type: NumericLiteral, value: '2',},
+        { type: EOF, value: undefined },
     ])
 })
 test('Template', t => {
@@ -245,10 +257,11 @@ test('Template', t => {
         { type: Punctuator, value: '=' },
         { type: Whitespace, value: ' ' },
         { type: Template, value: '`${b}a`' },
+        { type: EOF, value: undefined },
     ])
 })
-test('RegularExpression', t => {
-    const code = 'var a = /[a-zA-Z]/g'
+test('RegularExpression 1', t => {
+    const code = 'var a = /[a-zA-Z\+]/g'
     const tokens = tokenize(code);
     t.deepEqual(tokens, [
         { type: Keyword, value: 'var',},
@@ -258,8 +271,56 @@ test('RegularExpression', t => {
         { type: Punctuator, value: '=' },
         { type: Whitespace, value: ' ' },
         { type: RegularExpression, value: {
-            pattern: '[a-zA-Z]',
+            pattern: '[a-zA-Z\+]',
             flags: 'g'
         }},
+        { type: EOF, value: undefined },
+    ])
+})
+test('RegularExpression 2', t => {
+    const code = `var a = 1;
+    /2/i`
+    const tokens = tokenize(code);
+    t.deepEqual(tokens, [
+        { type: Keyword, value: 'var',},
+        { type: Whitespace, value: ' ' },
+        { type: Identifier, value: 'a',},
+        { type: Whitespace, value: ' ' },
+        { type: Punctuator, value: '=' },
+        { type: Whitespace, value: ' ' },
+        { type: NumericLiteral, value: '1',},
+        { type: Punctuator, value: ';' },
+        { type: Whitespace, value: '\n    ' },
+        { type: RegularExpression, value: {
+            pattern: '2',
+            flags: 'i'
+        }},
+        { type: EOF, value: undefined },
+    ])
+})
+test('calculate not RegularExpression', t => {
+    const code = `var a = 1
+    /2/i;a /= 1`
+    const tokens = tokenize(code);
+    t.deepEqual(tokens, [
+        { type: Keyword, value: 'var',},
+        { type: Whitespace, value: ' ' },
+        { type: Identifier, value: 'a',},
+        { type: Whitespace, value: ' ' },
+        { type: Punctuator, value: '=' },
+        { type: Whitespace, value: ' ' },
+        { type: NumericLiteral, value: '1',},
+        { type: Whitespace, value: '\n    ' },
+        { type: Punctuator, value: '/' },
+        { type: NumericLiteral, value: '2',},
+        { type: Punctuator, value: '/' },
+        { type: Identifier, value: 'i'},
+        { type: Punctuator, value: ';' },
+        { type: Identifier, value: 'a'},
+        { type: Whitespace, value: ' ' },
+        { type: Punctuator, value: '/=' },
+        { type: Whitespace, value: ' ' },
+        { type: NumericLiteral, value: '1',},
+        { type: EOF, value: undefined },
     ])
 })

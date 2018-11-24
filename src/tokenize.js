@@ -70,58 +70,9 @@ function tokenizeCode(codeStr) {
       }
       continue;
     }
-    if (currentChar === '/') {
-      // 判断正则表达式，要区分是否为除号'/'
-      // 目前方法：判断前一个非whitespace是否为 + - * / **等？
-      if(codeStr.charAt(i+1) === '/'){
-        // 忽略注释
-        i++;
-        continue;
-      }
-      let preToken = tokens[tokens.length-1]
-      if(preToken.type === Whitespace){
-        preToken = tokens[tokens.length-2]
-      }
-      if(!/[\+\-\*\/\=]/.test(preToken.value)){
-        tokens.push({
-          type: Punctuator,
-          value: currentChar
-        });
-        continue;
-      }
-      const _i = i;
-      const token = {
-        type: RegularExpression,
-        value: {
-          pattern: '',
-          flags: ''
-        }
-      }
-      tokens.push(token)
-      const closer = currentChar; //结束字符串等于开始字符串
-      let escaped = false; //表示下一个字符是不是被转义
-
-      for (i++; i < codeStr.length; i++) {
-        currentChar = codeStr.charAt(i);
-        if (escaped) {
-          escaped = false;
-        }
-        if (currentChar === '\\') { //被转义，下一个字符直接添加
-          escaped = true;
-        } else if (currentChar === closer) {
-          break;
-        }
-        token.value.pattern += currentChar //这里一个一个字符判断，到最后的closer也要添加
-      }
-      while(codeStr.charAt(i+1) && !/\s/.test(codeStr.charAt(i+1))){
-        if(/[igm]/.test(codeStr.charAt(++i))){
-          token.value.flags += codeStr.charAt(i)
-        }else{
-          throw new Error('Unexpected token '+codeStr.charAt(i))
-        }
-      }
-      continue;
-    }
+    // if (currentChar === '/') {
+      
+    // }
     if (/[0-9]/.test(currentChar)) {
       const token = {
         type: NumericLiteral,
@@ -252,6 +203,56 @@ function tokenizeCode(codeStr) {
           });
           break;
         }
+        if(currentChar === '/'){
+          // 判断正则表达式或者除号
+          // 目前方法：判断前一个非whitespace是否为 + - * / **等？
+          if(codeStr.charAt(i+1) === '/'){
+            // 忽略注释
+            i++;
+            continue;
+          }
+          let preToken = tokens[tokens.length-1]
+          if(preToken.type === Whitespace){
+            preToken = tokens[tokens.length-2]
+          }
+          if(!/[\+\-\*\/\=;]/.test(preToken.value)){
+            tokens.push({
+              type: Punctuator,
+              value: currentChar
+            });
+            continue;
+          }
+          const token = {
+            type: RegularExpression,
+            value: {
+              pattern: '',
+              flags: ''
+            }
+          }
+          tokens.push(token)
+          const closer = currentChar; //结束字符串等于开始字符串
+          let escaped = false; //表示下一个字符是不是被转义
+          for (i++; i < codeStr.length; i++) {
+            currentChar = codeStr.charAt(i);
+            if (escaped) {
+              escaped = false;
+            }
+            if (currentChar === '\\') { //被转义，下一个字符直接添加
+              escaped = true;
+            } else if (currentChar === closer) {
+              break;
+            }
+            token.value.pattern += currentChar //这里一个一个字符判断，到最后的closer也要添加
+          }
+          while(codeStr.charAt(i+1) && !/\s/.test(codeStr.charAt(i+1))){
+            if(/[igm]/.test(codeStr.charAt(++i))){
+              token.value.flags += codeStr.charAt(i)
+            }else{
+              throw new Error('Unexpected token '+codeStr.charAt(i))
+            }
+          }
+          continue;
+        }
       throw new Error('Unexpected ' + currentChar);
     }
     // if(/[.,]/.test(currentChar)){
@@ -263,6 +264,10 @@ function tokenizeCode(codeStr) {
     // }
     // 可扩充其他类型判断
   }
+  tokens.push({
+    type: EOF,
+    value: undefined
+  })
   return tokens;
 }
 function isKeyword(w){
@@ -287,7 +292,6 @@ function isKeyword(w){
     default:
       return false;
   }
-
 }
 // console.log(tokenizeCode(`
 // function dataURLtoBlob(dataurl) {
