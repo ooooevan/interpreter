@@ -28,6 +28,7 @@
  * ExportDefaultDeclaration  默认导出声明
  * 
  */
+const { tokenize, BooleanLiteral, EOF, Identifier, Keyword, NullLiteral, NumericLiteral, Punctuator, StringLiteral, RegularExpression, Template, Whitespace } = require('../src/tokenize');
 
 function parse(tokens) {
   let i = -1;
@@ -36,7 +37,15 @@ function parse(tokens) {
   function nextStatement() {
     stash();
     nextToken();
-    if (curToken.type === 'identifier' && curToken.value === 'var') {
+    switch(curToken.type){
+      case Keyword:
+      case BooleanLiteral:
+      case NullLiteral:
+      case Identifier:
+      case NumericLiteral:
+      case Identifier:
+    }
+    if (curToken.type === Keyword && curToken.value === 'var') {
       const statement = {
         type: 'VariableDeclaration',
         kind: curToken.value,
@@ -59,7 +68,7 @@ function parse(tokens) {
       statement.declarations.push(declaration);
       return statement
     }
-    if (curToken.type === 'identifier' && curToken.value === 'if') {
+    if (curToken.type === Keyword && curToken.value === 'if') {
       const statement = {
         type: 'IfStatement',
       }
@@ -85,7 +94,7 @@ function parse(tokens) {
       commit();
       return statement;
     }
-    if (curToken.type === 'identifier' && curToken.value === 'function') {
+    if (curToken.type === Keyword && curToken.value === 'function') {
       const statement = {
         type: 'FunctionDeclaration',
         id: {
@@ -302,51 +311,10 @@ function parse(tokens) {
   }
   return ast;
 }
-// const tokens = [ { type: 'whitespace', value: '\n  ' },
-// { type: 'identifier', value: 'function' },
-// { type: 'whitespace', value: ' ' },
-// { type: 'identifier', value: 'a' },
-// { type: 'parens', value: '(' },
-// { type: 'parens', value: ')' },
-// { type: 'brace', value: '{' },
-// { type: 'whitespace', value: '\n    ' },
-// { type: 'identifier', value: 'var' },
-// { type: 'whitespace', value: ' ' },
-// { type: 'identifier', value: 'abc' },
-// { type: 'whitespace', value: ' ' },
-// { type: 'operator', value: '=' },
-// { type: 'whitespace', value: ' ' },
-// { type: 'string', value: '\'abc\'' },
-// { type: 'whitespace', value: '\n    ' },
-// { type: 'identifier', value: 'alert' },
-// { type: 'parens', value: '(' },
-// { type: 'string', value: '"1"' },
-// { type: 'parens', value: ')' },
-// { type: 'sep', value: ';' },
-// { type: 'whitespace', value: '\n  ' },
-// { type: 'brace', value: '}' },
-// { type: 'sep', value: ';' },
-// { type: 'whitespace', value: '\n  ' },
-// { type: 'identifier', value: 'if' },
-// { type: 'whitespace', value: ' ' },
-// { type: 'parens', value: '(' },
-// { type: 'number', value: '1' },
-// { type: 'whitespace', value: ' ' },
-// { type: 'operator', value: '>' },
-// { type: 'whitespace', value: ' ' },
-// { type: 'number', value: '0' },
-// { type: 'parens', value: ')' },
-// { type: 'whitespace', value: ' ' },
-// { type: 'brace', value: '{' },
-// { type: 'whitespace', value: '\n    ' },
-// { type: 'identifier', value: 'a' },
-// { type: 'parens', value: '(' },
-// { type: 'parens', value: ')' },
-// { type: 'sep', value: ';' },
-// { type: 'whitespace', value: '\n  ' },
-// { type: 'brace', value: '}' },
-// { type: 'whitespace', value: '\n' } ]
-// const ast = parse(tokens)
-// console.log(JSON.stringify(ast, null, 2))
 
+const {tokenize} = require('./tokenize')
+const token = tokenize('a = "1"');
+console.log(token)
+const ast = parse(token);
+console.log(ast)
 module.exports = parse

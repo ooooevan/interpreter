@@ -46,10 +46,10 @@ function tokenizeCode(codeStr) {
   const tokens = [];
   for (var i = 0; i < codeStr.length; i++) {
     var currentChar = codeStr.charAt(i);
-    if (currentChar === '"' || currentChar === "'") {
+    if (currentChar === '"' || currentChar === "'" || currentChar === "`") {
       //字符串的开始，要一直取值到字符串的结束
       const token = {
-        type: StringLiteral,
+        type: currentChar === '`'?Template:StringLiteral,
         value: currentChar
       }
       tokens.push(token)
@@ -65,7 +65,59 @@ function tokenizeCode(codeStr) {
         if (currentChar === '\\') { //被转义，下一个字符直接添加
           escaped = true;
         } else if (currentChar === closer) {
-          break; //内层不符合就要跳出本层循环
+          break;
+        }
+      }
+      continue;
+    }
+    if (currentChar === '/') {
+      // 判断正则表达式，要区分是否为除号'/'
+      // 目前方法：判断前一个非whitespace是否为 + - * / **等？
+      if(codeStr.charAt(i+1) === '/'){
+        // 忽略注释
+        i++;
+        continue;
+      }
+      let preToken = tokens[tokens.length-1]
+      if(preToken.type === Whitespace){
+        preToken = tokens[tokens.length-2]
+      }
+      if(!/[\+\-\*\/\=]/.test(preToken.value)){
+        tokens.push({
+          type: Punctuator,
+          value: currentChar
+        });
+        continue;
+      }
+      const _i = i;
+      const token = {
+        type: RegularExpression,
+        value: {
+          pattern: '',
+          flags: ''
+        }
+      }
+      tokens.push(token)
+      const closer = currentChar; //结束字符串等于开始字符串
+      let escaped = false; //表示下一个字符是不是被转义
+
+      for (i++; i < codeStr.length; i++) {
+        currentChar = codeStr.charAt(i);
+        if (escaped) {
+          escaped = false;
+        }
+        if (currentChar === '\\') { //被转义，下一个字符直接添加
+          escaped = true;
+        } else if (currentChar === closer) {
+          break;
+        }
+        token.value.pattern += currentChar //这里一个一个字符判断，到最后的closer也要添加
+      }
+      while(codeStr.charAt(i+1) && !/\s/.test(codeStr.charAt(i+1))){
+        if(/[igm]/.test(codeStr.charAt(++i))){
+          token.value.flags += codeStr.charAt(i)
+        }else{
+          throw new Error('Unexpected token '+codeStr.charAt(i))
         }
       }
       continue;
@@ -193,7 +245,7 @@ function tokenizeCode(codeStr) {
           i+=1;
           break;
         }
-        if('<>=!+-*%&|^/'.indexOf(currentChar) > -1){
+        if('<>=!+-*%&|^'.indexOf(currentChar) > -1){
           tokens.push({
             type: Punctuator,
             value: currentChar
@@ -238,26 +290,17 @@ function isKeyword(w){
 
 }
 // console.log(tokenizeCode(`
-// if (1 > 0) {
-//   alert("if 1 > 0");
+// function dataURLtoBlob(dataurl) {
+//   var arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
+//       bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
+//   while(n--){
+//       u8arr[n] = bstr.charCodeAt(n);
+//   }
+//   return new Blob([u8arr], {type:mime});
 // }
 // `))
-// console.log(tokenizeCode(`
-//   function a(){
-//     var abc = 'abc'
-//     alert("1");
-//   };
-//   if (1 > 0) {
-//     a();
-//   }
-// `))
-// console.log(tokenizeCode(`
-// var a = 1+2+3;
-// alert(1);
-// `))
-// console.log(tokenizeCode(`
-// var a = Math.pow(2, 3)
-// `))
+const code = 'var a = /[a-zA-Z]/g'
+const tokens = tokenizeCode(code);
 
 module.exports = {
   tokenize: tokenizeCode,

@@ -234,3 +234,32 @@ test('Punctuator 5', t => {
         { type: NumericLiteral, value: '2',},
     ])
 })
+test('Template', t => {
+    const code = 'var a = `${b}a`'
+    const tokens = tokenize(code);
+    t.deepEqual(tokens, [
+        { type: Keyword, value: 'var',},
+        { type: Whitespace, value: ' ' },
+        { type: Identifier, value: 'a',},
+        { type: Whitespace, value: ' ' },
+        { type: Punctuator, value: '=' },
+        { type: Whitespace, value: ' ' },
+        { type: Template, value: '`${b}a`' },
+    ])
+})
+test('RegularExpression', t => {
+    const code = 'var a = /[a-zA-Z]/g'
+    const tokens = tokenize(code);
+    t.deepEqual(tokens, [
+        { type: Keyword, value: 'var',},
+        { type: Whitespace, value: ' ' },
+        { type: Identifier, value: 'a',},
+        { type: Whitespace, value: ' ' },
+        { type: Punctuator, value: '=' },
+        { type: Whitespace, value: ' ' },
+        { type: RegularExpression, value: {
+            pattern: '[a-zA-Z]',
+            flags: 'g'
+        }},
+    ])
+})
