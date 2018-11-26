@@ -90,14 +90,14 @@ function tokenizeCode(codeStr) {
       }
       continue;
     }
-    if (/[a-zA-Z&_]/.test(currentChar)) {
+    if (/[a-zA-Z$_]/.test(currentChar)) {
       const token = {
         type: Identifier,
         value: currentChar
       }
       for (i++; i < codeStr.length; i++) {
         currentChar = codeStr.charAt(i);
-        if (/[a-zA-Z0-9&_]/.test(currentChar)) {
+        if (/[a-zA-Z0-9$_]/.test(currentChar)) {
           token.value += currentChar
         } else {
           i--;
@@ -293,18 +293,20 @@ function isKeyword(w){
       return false;
   }
 }
-// console.log(tokenizeCode(`
-// function dataURLtoBlob(dataurl) {
-//   var arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
-//       bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
-//   while(n--){
-//       u8arr[n] = bstr.charCodeAt(n);
-//   }
-//   return new Blob([u8arr], {type:mime});
-// }
-// `))
-const code = 'var a = /[a-zA-Z]/g'
-const tokens = tokenizeCode(code);
+console.log(tokenizeCode(`
+function gotoTrackListDetail(shoppingListId,current){
+  var backUrl = window.location.href;
+  backUrl=encodeURIComponent(backUrl);
+  var url = "trackListDetail?shoppingListId="+shoppingListId+"&current="+current+"&backUrl="+backUrl;
+  var newPage = window.open('/systemMgr/admin/');
+  setTimeout(function(){
+      newPage.top.openMenuPage('INQUIRY_TRACK');
+      $(newPage.document).find('#iframeCon').attr('src','/agentBuy/admin/'+url)
+  },500)
+}
+`))
+// const code = 'var a = /[a-zA-Z]/g'
+// const tokens = tokenizeCode(code);
 
 module.exports = {
   tokenize: tokenizeCode,

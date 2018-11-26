@@ -44,3 +44,19 @@ js浮点数用`Big.js`处理，也有类似的`bignumber.js`
 关于js浮点数
 [https://github.com/camsong/blog/issues/9](https://github.com/camsong/blog/issues/9)
 
+
+
+
+### 注意事项：
+1、区分除号和正则，还有换行
+https://blog.csdn.net/github_38885296/article/details/78638013
+这是除号
+```js
+i=1,i=1
+/2/i
+```
+这是正则
+```js
+i=1,i=1;
+/2/i
+```
