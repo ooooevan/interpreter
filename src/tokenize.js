@@ -244,7 +244,7 @@ function tokenizeCode(codeStr) {
             }
             token.value.pattern += currentChar //这里一个一个字符判断，到最后的closer也要添加
           }
-          while(codeStr.charAt(i+1) && !/\s/.test(codeStr.charAt(i+1))){
+          while(codeStr.charAt(i+1) && !/[\s;]/.test(codeStr.charAt(i+1))){
             if(/[igm]/.test(codeStr.charAt(++i))){
               token.value.flags += codeStr.charAt(i)
             }else{
@@ -253,16 +253,9 @@ function tokenizeCode(codeStr) {
           }
           continue;
         }
+      // 可扩充其他类型判断
       throw new Error('Unexpected ' + currentChar);
     }
-    // if(/[.,]/.test(currentChar)){
-    //   tokens.push({
-    //     type: Punctuator,
-    //     value: currentChar
-    //   });
-    //   continue
-    // }
-    // 可扩充其他类型判断
   }
   tokens.push({
     type: EOF,
@@ -295,14 +288,9 @@ function isKeyword(w){
 }
 console.log(tokenizeCode(`
 function gotoTrackListDetail(shoppingListId,current){
-  var backUrl = window.location.href;
-  backUrl=encodeURIComponent(backUrl);
-  var url = "trackListDetail?shoppingListId="+shoppingListId+"&current="+current+"&backUrl="+backUrl;
-  var newPage = window.open('/systemMgr/admin/');
-  setTimeout(function(){
-      newPage.top.openMenuPage('INQUIRY_TRACK');
-      $(newPage.document).find('#iframeCon').attr('src','/agentBuy/admin/'+url)
-  },500)
+  var str = 'fdsa';
+  var reg = /[a-zA-Z$_]/g;
+  var isIdentifierStart = reg.test(str)
 }
 `))
 // const code = 'var a = /[a-zA-Z]/g'
