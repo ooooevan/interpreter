@@ -286,13 +286,13 @@ function isKeyword(w){
       return false;
   }
 }
-console.log(tokenizeCode(`
-function gotoTrackListDetail(shoppingListId,current){
-  var str = 'fdsa';
-  var reg = /[a-zA-Z$_]/g;
-  var isIdentifierStart = reg.test(str)
-}
-`))
+// console.log(tokenizeCode(`
+// test('RegularExpression 2', t => {
+//   const code = \`var a = 1;
+//   /2/i;\`
+//   const tokens = tokenize(code);
+// })
+// `))
 // const code = 'var a = /[a-zA-Z]/g'
 // const tokens = tokenizeCode(code);
 

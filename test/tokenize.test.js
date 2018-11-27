@@ -261,7 +261,7 @@ test('Template', t => {
     ])
 })
 test('RegularExpression 1', t => {
-    const code = 'var a = /[a-zA-Z\+]/g'
+    const code = 'var a = /[a-zA-Z\+]/g;'
     const tokens = tokenize(code);
     t.deepEqual(tokens, [
         { type: Keyword, value: 'var',},
@@ -274,6 +274,7 @@ test('RegularExpression 1', t => {
             pattern: '[a-zA-Z\+]',
             flags: 'g'
         }},
+        { type: Punctuator, value: ';' },
         { type: EOF, value: undefined },
     ])
 })
@@ -298,6 +299,53 @@ test('RegularExpression 2', t => {
         { type: EOF, value: undefined },
     ])
 })
+test('RegularExpression 2', t => {
+    const code = `
+    test('RegularExpression 2', t => {
+        const code = \`var a = 1;
+        /2/i;\`
+        const tokens = tokenize(code);
+    })`
+    const tokens = tokenize(code);
+    t.deepEqual(tokens, [
+        { type: Whitespace, value: '\n    ' },
+        { type: Identifier, value: 'test',},
+        { type: Punctuator, value: '(' },
+        { type: StringLiteral, value: '\'RegularExpression 2\'' },
+        { type: Punctuator, value: ',' },
+        { type: Whitespace, value: ' ' },
+        { type: Identifier, value: 't',},
+        { type: Whitespace, value: ' ' },
+        { type: Punctuator, value: '=>' },
+        { type: Whitespace, value: ' ' },
+        { type: Punctuator, value: '{' },
+        { type: Whitespace, value: '\n        ' },
+        { type: Keyword, value: 'const' },
+        { type: Whitespace, value: ' ' },
+        { type: Identifier, value: 'code' },
+        { type: Whitespace, value: ' ' },
+        { type: Punctuator, value: '=' },
+        { type: Whitespace, value: ' ' },
+        { type: Template, value: '`var a = 1;\n        /2/i;`' },
+        { type: Whitespace, value: '\n        ' },
+        { type: Keyword, value: 'const' },
+        { type: Whitespace, value: ' ' },
+        { type: Identifier, value: 'tokens' },
+        { type: Whitespace, value: ' ' },
+        { type: Punctuator, value: '=' },
+        { type: Whitespace, value: ' ' },
+        { type: Identifier, value: 'tokenize' },
+        { type: Punctuator, value: '(' },
+        { type: Identifier, value: 'code' },
+        { type: Punctuator, value: ')' },
+        { type: Punctuator, value: ';' },
+        { type: Whitespace, value: '\n    ' },
+        { type: Punctuator, value: '}' },
+        { type: Punctuator, value: ')' },
+        { type: EOF, value: undefined },
+    ])
+})
+
 test('calculate not RegularExpression', t => {
     const code = `var a = 1
     /2/i;a /= 1`

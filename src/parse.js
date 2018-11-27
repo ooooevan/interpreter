@@ -28,7 +28,49 @@
  * ExportDefaultDeclaration  默认导出声明
  * 
  */
-const { tokenize, BooleanLiteral, EOF, Identifier, Keyword, NullLiteral, NumericLiteral, Punctuator, StringLiteral, RegularExpression, Template, Whitespace } = require('../src/tokenize');
+const {
+  tokenize,
+  BooleanLiteral,
+  EOF,
+  Identifier,
+  Keyword,
+  NullLiteral,
+  NumericLiteral,
+  Punctuator,
+  StringLiteral,
+  RegularExpression,
+  Template,
+  Whitespace
+} = require('../src/tokenize');
+
+const VariableDeclaration = 'VariableDeclaration'
+const BinaryExpression = 'BinaryExpression'
+const ConditionalExpression = 'ConditionalExpression'
+const ExpressionStatement = 'ExpressionStatement'
+const AssignmentExpression = 'AssignmentExpression'
+const MemberExpression = 'MemberExpression'
+const ThisExpression = 'ThisExpression'
+const ObjectExpression = 'ObjectExpression'
+const ArrayExpression = 'ArrayExpression'
+const NewExpression = 'NewExpression'
+const CallExpression = 'CallExpression'
+const TemplateLiteral = 'TemplateLiteral'
+const TemplateElement = 'TemplateElement'
+const ArrowFunctionExpression = 'ArrowFunctionExpression'
+const UnaryExpression = 'UnaryExpression'
+const UpdateExpression = 'UpdateExpression'
+const FunctionDeclaration = 'FunctionDeclaration'
+const BlockStatement = 'BlockStatement'
+const AssignmentPattern = 'AssignmentPattern'
+const IfStatement = 'IfStatement'
+const DoWhileStatement = 'DoWhileStatement'
+const WhileStatement = 'WhileStatement'
+const SwitchStatement = 'SwitchStatement'
+const ForStatement = 'ForStatement'
+const ImportDeclaration = 'ImportDeclaration'
+const ImportDefaultSpecifier = 'ImportDefaultSpecifier'
+const ExportDefaultDeclaration = 'ExportDefaultDeclaration'
+
 
 function parse(tokens) {
   let i = -1;
@@ -37,13 +79,58 @@ function parse(tokens) {
   function nextStatement() {
     stash();
     nextToken();
-    switch(curToken.type){
+    switch (curToken.type) {
       case Keyword:
-      case BooleanLiteral:
-      case NullLiteral:
-      case Identifier:
-      case NumericLiteral:
-      case Identifier:
+        let val = curToken.value
+        let len = val.length
+        switch (len) {
+          case 2:
+            if (val === 'do') {
+              const statement = {
+                type: DoWhileStatement,
+                body: nextStatement(),
+                test: ''
+              }
+              nextToken();
+              if(curToken.value !== 'while'){
+                throw new Error('Expected while but got '+curToken.value);
+              }
+              nextToken();
+              if(curToken.value !== '('){
+                throw new Error('Expected ( but got '+curToken.value);
+              }
+              statement.test = nextExpression();
+              return statement;
+            }
+            if(val === 'in'){  // ForInStatement 2、BinaryExpression
+
+            }
+            if(val === 'if'){
+              const statement = {
+                type: IfStatement,
+                test: '',
+                consequent: '',
+              }
+              nextToken();
+              if(curToken.value !== '('){
+                throw new Error('Expected ( but got '+curToken.value);
+              }
+              statement.test = nextExpression()
+              nextToken();
+
+              statement.consequent = nextStatement()
+              return statement
+            }
+        }
+        // case BooleanLiteral:
+        // case NullLiteral:
+        // case Identifier:
+        // case NumericLiteral:
+        // case StringLiteral:
+        // case RegularExpression:
+        // case Template:
+        // case Whitespace:
+        // case Punctuator:
     }
     if (curToken.type === Keyword && curToken.value === 'var') {
       const statement = {
@@ -135,7 +222,7 @@ function parse(tokens) {
       commit();
       return statement;
     }
-    if (curToken.type === 'brace' && curToken.value === '{') {
+    if (curToken.value === '{') {
       const statement = {
         type: 'BlockStatement',
         body: []
@@ -143,7 +230,7 @@ function parse(tokens) {
       while (i < tokens.length) {
         stash();
         nextToken();
-        if (curToken.type === 'brace' && curToken.value === '}') {
+        if (curToken.value === '}') {
           commit(); //这里commit了外层有commit，还不确定为什么
           break;
         };
@@ -151,7 +238,7 @@ function parse(tokens) {
         statement.body.push(nextStatement())
         stash()
         nextToken();
-        if (curToken.type !== 'sep' || curToken.value !== ';') {
+        if (curToken.value !== ';') {
           rewind();
         }
       }
@@ -187,88 +274,94 @@ function parse(tokens) {
 
   function nextExpression() {
     nextToken()
-    if (curToken.type === 'identifier') {
-      const identifier = {
-        type: 'Identifier',
-        name: curToken.value
-      }
-      stash();
-      nextToken();
-      if (curToken.type === 'parens' && curToken.value === '(') {
-        // 标识符后面跟着'('，这是函数调用
-        const expr = {
-          type: 'CallExpression',
-          callee: identifier,
-          arguments: []
-        };
+    switch (curToken.type) {
+      case Identifier:
+        const identifier = {
+          type: Identifier,
+          name: curToken.value
+        }
         stash();
         nextToken();
-        if (curToken.type === 'parens' && curToken.value === ')') {
-          // '('后面跟着')'，说明没有参数
+        if (curToken.value === '(') {
+          // 函数调用，如 alert(1)
+          const expression = {
+            type: CallExpression,
+            callee: identifier,
+            arguments: []
+          };
+          stash();
+          nextToken();
+          if (curToken.value === ')') {
+            commit();
+          } else {
+            // 有多个参数，如alert(1, 2)
+            rewind();
+            while (i < tokens.length) {
+              expression.arguments.push(nextExpression());
+              nextToken();
+              if (curToken.value === ')') {
+                break;
+              }
+              if (curToken.value !== ',') {
+                throw new Error('Unexpected token ' + curToken.value)
+              }
+            }
+          }
           commit();
-        } else {
-          rewind();
-          while (i < tokens.length) {
-            expr.arguments.push(nextExpression());
-            nextToken()
-            if (curToken.type === 'parens' && curToken.value === ')') {
-              break;
-            }
-            if (curToken.type !== 'comma' && curToken.value !== ',') {
-              // 参数没到')'，那就是逗号，否则报错
-              throw new Error('Expected , between arguments')
-            }
-          }
+          return expression;
         }
-        commit();
-        return expr;
-      }
-      rewind();
-      return identifier;
-    }
-    if (curToken.type === 'number') {
-      // 常量表达式
-      let statement = {
-        type: 'Literal',
-        value: eval(curToken.value)
-      }
-      stash();
-      nextToken();
-      while(curToken.type === 'operator'){
-        const _curToken = curToken
-        nextToken();
-        if(curToken.type !== 'number' && curToken.type !== 'string') {
-          throw new Error('Unexpected '+curToken.value)
+        rewind();
+        return identifier;
+      case NumericLiteral:
+        let statement = {
+          type: NumericLiteral,
+          value: Number(curToken.value)
+        };
+        return statement;
+      case StringLiteral:
+        return {
+          type: StringLiteral,
+          value: eval(curToken.value)
         }
-        _statement = {
-          type: 'BinaryExpression',
-          left: statement,
-          operator: _curToken.value,
-          right: {
-            type: 'Literal',
-            value: eval(curToken.value)
-          }
+      case BooleanLiteral:
+        return {
+          type: BooleanLiteral,
+          value: Boolean(curToken.value)
         }
-        statement = _statement
-        stash()
-        nextToken();
-      }
-      rewind();
-      return statement;
+      case NullLiteral:
+        return {
+          type: NullLiteral,
+        }
     }
-    if (curToken.type === 'string') {
-      return literal = {
-        type: 'Literal',
-        value: eval(curToken.value)
-      }
-    }
-    // if(curToken.type === 'sep'){
-    //   return {
-    //     type: 'BlockStatement'
+    // if (curToken.type === NumericLiteral) {
+    //   // 常量表达式
+    //   let statement = {
+    //     type: NumericLiteral,
+    //     value: eval(curToken.value)
     //   }
-    // }
-    // if (curToken.type !== 'EOF') {
-    //   throw new Error('Unexpected token ' + curToken.value)
+    //   stash();
+    //   nextToken();
+    //   while (curToken.type === 'operator') {
+    //     const _curToken = curToken
+    //     nextToken();
+    //     if (curToken.type !== 'string') {
+    //       throw new Error('Unexpected ' + curToken.value)
+    //     }
+    //     _statement = {
+    //       type: 'BinaryExpression',
+    //       left: statement,
+    //       operator: _curToken.value,
+    //       right: {
+    //         type: NumericLiteral,
+    //         value: eval(curToken.value)
+    //       }
+    //     }
+    //     statement = _statement
+    //     stash()
+    //     nextToken();
+    //   }
+    //   rewind();
+    //   return statement;
     // }
   }
 
@@ -283,7 +376,7 @@ function parse(tokens) {
     do {
       i++;
       curToken = tokens[i] || {
-        type: 'EOF'
+        type: EOF
       }
     } while (curToken.type === 'whitespace')
   }
@@ -312,9 +405,36 @@ function parse(tokens) {
   return ast;
 }
 
-const {tokenize} = require('./tokenize')
-const token = tokenize('a = "1"');
-console.log(token)
+const token = tokenize('if(true){alert()}');
 const ast = parse(token);
-console.log(ast)
-module.exports = parse
+console.log(JSON.stringify(ast, null, 2))
+module.exports = {
+  parse,
+  VariableDeclaration,
+  BinaryExpression,
+  ConditionalExpression,
+  ExpressionStatement,
+  AssignmentExpression,
+  MemberExpression,
+  ThisExpression,
+  ObjectExpression,
+  ArrayExpression,
+  NewExpression,
+  CallExpression,
+  TemplateLiteral,
+  TemplateElement,
+  ArrowFunctionExpression,
+  UnaryExpression,
+  UpdateExpression,
+  FunctionDeclaration,
+  BlockStatement,
+  AssignmentPattern,
+  IfStatement,
+  DoWhileStatement,
+  WhileStatement,
+  SwitchStatement,
+  ForStatement,
+  ImportDeclaration,
+  ImportDefaultSpecifier,
+  ExportDefaultDeclaration,
+}
