@@ -269,7 +269,7 @@ function isKeyword(w){
     case 2:
       return w === 'do' || w === 'in' || w === 'if';
     case 3:
-      return w === 'for' || w === 'new' || w === 'try' || w === 'var';
+      return w === 'for' || w === 'new' || w === 'try' || w === 'var' || w === 'let';
     case 4:
       return w === 'case' || w === 'else' || w === 'this' || w === 'void' || w === 'with';
     case 5:

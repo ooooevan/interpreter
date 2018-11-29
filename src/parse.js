@@ -2,6 +2,7 @@
  * 
  * 常见类型
  * VariableDeclaration  声明
+ * VariableDeclarator 声明中的赋值
  * BinaryExpression   二元运算符表达式，有operator、left和right属性
  * ConditionalExpression  三元运算表达式，有test、consequent和alternate属性
  * ExpressionStatement  表达式语句
@@ -44,6 +45,7 @@ const {
 } = require('../src/tokenize');
 
 const VariableDeclaration = 'VariableDeclaration'
+const VariableDeclarator = 'VariableDeclarator'
 const BinaryExpression = 'BinaryExpression'
 const ConditionalExpression = 'ConditionalExpression'
 const ExpressionStatement = 'ExpressionStatement'
@@ -101,11 +103,9 @@ function parse(tokens) {
               }
               statement.test = nextExpression();
               return statement;
-            }
-            if(val === 'in'){  // ForInStatement 2、BinaryExpression
+            }else if(val === 'in'){  // ForInStatement 2、BinaryExpression
 
-            }
-            if(val === 'if'){
+            }else if(val === 'if'){
               const statement = {
                 type: IfStatement,
                 test: '',
@@ -117,20 +117,101 @@ function parse(tokens) {
               }
               statement.test = nextExpression()
               nextToken();
-
               statement.consequent = nextStatement()
               return statement
             }
+          case 3:  //return w === 'for' || w === 'new' || w === 'try' || w === 'var';
+            if(val === 'for'){
+              const statement = {
+                type: ForStatement,
+                init: '',
+                test: '',
+                update: '',
+                body: '',
+              }
+              nextToken();
+              if(curToken.value !== '('){
+                throw new Error('Expected ( but got '+curToken.value);
+              }
+              statement.init = nextStatement();
+              if(curToken.value !== ';'){
+                throw new Error('Unexpected token '+curToken.value);
+              }
+              statement.test = nextExpression();
+              nextToken()
+              if(curToken.value !== ';'){
+                throw new Error('Unexpected token '+curToken.value);
+              }
+              statement.update = nextExpression();
+              nextToken()
+              if(curToken.value !== ')'){
+                throw new Error('Expected ) but got '+curToken.value);
+              }
+              statement.body = nextStatement();
+              return statement
+            }else if(val === 'var') {
+              const statement = {
+                type: VariableDeclaration,
+                declarations: [],
+                kind: val
+              }
+              nextToken();
+              if(curToken.type !== Identifier){
+                throw new Error('Unexpected token ' + curToken.value);
+              }
+              const declarator = {
+                type: VariableDeclarator,
+                id: {
+                  type: Identifier,
+                  name: curToken.value
+                },
+                init: undefined,
+              }
+              nextToken();
+              if(curToken.value === '='){
+                declarator.init = nextExpression();
+              }
+              statement.declarations.push(declarator);
+              nextToken();
+              while(curToken.value === ','){
+                nextToken();
+                if(curToken.type !== Identifier){
+                  throw new Error('Unexpected token ' + curToken.value);
+                }
+                const declarator = {
+                  type: VariableDeclarator,
+                  id: {
+                    type: Identifier,
+                    name: curToken.value
+                  },
+                  init: undefined,
+                }
+                nextToken();
+                if(curToken.value === '='){
+                  declarator.init = nextExpression();
+                  nextToken();
+                }
+                statement.declarations.push(declarator);
+              }
+              return statement
+            }else if(val === 'let') {}
         }
-        // case BooleanLiteral:
-        // case NullLiteral:
-        // case Identifier:
-        // case NumericLiteral:
-        // case StringLiteral:
-        // case RegularExpression:
-        // case Template:
-        // case Whitespace:
-        // case Punctuator:
+      case Identifier:
+        const statement = {
+          type: ExpressionStatement,
+          expression: {}
+        }
+        rewind();
+        statement.expression = nextExpression();
+        return statement;
+      // case BooleanLiteral:
+      // case NullLiteral:
+      // case NumericLiteral:
+      // case StringLiteral:
+      // case RegularExpression:
+      // case Template:
+      // case Whitespace:
+      // case Punctuator:
     }
     if (curToken.type === Keyword && curToken.value === 'var') {
       const statement = {
@@ -272,14 +353,27 @@ function parse(tokens) {
     }
   }
 
-  function nextExpression() {
+  function nextExpression(notRecursion) {
+    stash();
     nextToken()
+    let isNumericLiteral = false
     switch (curToken.type) {
+      case NumericLiteral:
+        isNumericLiteral = true
       case Identifier:
-        const identifier = {
-          type: Identifier,
-          name: curToken.value
+        let identifier
+        if(isNumericLiteral){
+          identifier = {
+            type: NumericLiteral,
+            value: Number(curToken.value)
+          }
+        }else{
+          identifier = {
+            type: Identifier,
+            name: curToken.value
+          }
         }
+        
         stash();
         nextToken();
         if (curToken.value === '(') {
@@ -298,7 +392,7 @@ function parse(tokens) {
             rewind();
             while (i < tokens.length) {
               expression.arguments.push(nextExpression());
-              nextToken();
+              nextToken()
               if (curToken.value === ')') {
                 break;
               }
@@ -310,14 +404,105 @@ function parse(tokens) {
           commit();
           return expression;
         }
-        rewind();
+        if(notRecursion){
+          rewind();
+          return identifier;
+        }
+        rewind()
+        stash();
+        nextToken()
+        if(curToken.type === Punctuator){
+          let statement = identifier
+          let preCurToken
+          while (curToken.type === Punctuator) {
+            switch(curToken.value){
+              case '.':
+              // case '[':
+              // case ']':
+                preCurToken = curToken
+                // 不考虑有括号
+                _statement = {
+                  type: MemberExpression,
+                  object: statement,
+                  property: nextExpression(true)
+                }
+                statement = _statement
+                break;
+              // case '(':
+              // case ')':
+              
+              case '>>>=':
+              case '===':
+              case '!==':
+              case '>>>':
+              case '<<=':
+              case '>>=':
+              case '**=':
+              case '&&':
+              case '||':
+              case '==':
+              case '!=':
+              case '+=':
+              case '-=':
+              case '*=':
+              case '/=':
+              
+              case '<<':
+              case '>>':
+              case '&=':
+              case '|=':
+              case '^=':
+              case '%=':
+              case '<=':
+              case '>=':
+              case '=>':
+              case '**':
+
+              case '!':
+              case '&':
+              case '%':
+              case '|':
+              case '^':
+              case '+':
+              case '-':
+              case '<':
+              case '>':
+              case '*':
+              case '/':
+                preCurToken = curToken
+                _statement = {
+                  type: BinaryExpression,
+                  left: statement,
+                  operator: preCurToken.value,
+                  right: nextExpression(true)
+                }
+                statement = _statement
+                // stash()
+                break;
+              case '++':
+              case '--':
+                _statement = {
+                  type: UpdateExpression,
+                  operator: curToken.value,
+                  argument: {
+                    type: Identifier,
+                    name: statement.name
+                  },
+                }
+                return _statement;
+              default:  // ; ) ,
+                nextToken(-1)
+                return statement;
+            }
+            commit()
+            nextToken()
+          }
+          // rewind();
+          return statement;
+        }
+        // rewind();
         return identifier;
-      case NumericLiteral:
-        let statement = {
-          type: NumericLiteral,
-          value: Number(curToken.value)
-        };
-        return statement;
+
       case StringLiteral:
         return {
           type: StringLiteral,
@@ -372,13 +557,17 @@ function parse(tokens) {
     stashStack.push(i)
   }
   // 获取下一个token，自动跳过空白
-  function nextToken() {
+  function nextToken(index) {
     do {
-      i++;
+      if(index === -1){
+        i--;
+      }else{
+        i++;
+      }
       curToken = tokens[i] || {
         type: EOF
       }
-    } while (curToken.type === 'whitespace')
+    } while (curToken.type === Whitespace)
   }
 
   function commit() {
@@ -405,12 +594,13 @@ function parse(tokens) {
   return ast;
 }
 
-const token = tokenize('if(true){alert()}');
+const token = tokenize('for(var i=0;i<10;i++){}');
 const ast = parse(token);
 console.log(JSON.stringify(ast, null, 2))
 module.exports = {
   parse,
   VariableDeclaration,
+  VariableDeclarator,
   BinaryExpression,
   ConditionalExpression,
   ExpressionStatement,
