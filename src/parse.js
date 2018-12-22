@@ -373,43 +373,14 @@ function parse(tokens) {
             name: curToken.value
           }
         }
-        
-        stash();
-        nextToken();
-        if (curToken.value === '(') {
-          // 函数调用，如 alert(1)
-          const expression = {
-            type: CallExpression,
-            callee: identifier,
-            arguments: []
-          };
-          stash();
-          nextToken();
-          if (curToken.value === ')') {
-            commit();
-          } else {
-            // 有多个参数，如alert(1, 2)
-            rewind();
-            while (i < tokens.length) {
-              expression.arguments.push(nextExpression());
-              nextToken()
-              if (curToken.value === ')') {
-                break;
-              }
-              if (curToken.value !== ',') {
-                throw new Error('Unexpected token ' + curToken.value)
-              }
-            }
-          }
-          commit();
-          return expression;
-        }
         if(notRecursion){
-          rewind();
-          return identifier;
+          nextToken()
+          if(curToken.value !== '('){
+            nextToken(-1)
+            return identifier
+          }
+          nextToken(-1)
         }
-        rewind()
-        stash();
         nextToken()
         if(curToken.type === Punctuator){
           let statement = identifier
@@ -428,9 +399,38 @@ function parse(tokens) {
                 }
                 statement = _statement
                 break;
-              // case '(':
+              case '(':
+                const expression = {
+                  type: CallExpression,
+                  callee: identifier,
+                  arguments: []
+                };
+                stash();
+                nextToken();
+                if (curToken.value === ')') {
+                  commit();
+                } else {
+                  // 有多个参数，如alert(1, 2)
+                  rewind();
+                  while (i < tokens.length) {
+                    expression.arguments.push(nextExpression());
+                    nextToken()
+                    if (curToken.value === ')') {
+                      break;
+                    }
+                    if (curToken.value !== ',') {
+                      throw new Error('Unexpected token ' + curToken.value)
+                    }
+                  }
+                }
+                if(notRecursion){
+                  return expression;
+                }
+                commit();
+                statement = expression;
+                break;
               // case ')':
-              
+                
               case '>>>=':
               case '===':
               case '!==':
@@ -467,8 +467,6 @@ function parse(tokens) {
               case '-':
               case '<':
               case '>':
-              case '*':
-              case '/':
                 preCurToken = curToken
                 _statement = {
                   type: BinaryExpression,
@@ -476,6 +474,20 @@ function parse(tokens) {
                   operator: preCurToken.value,
                   right: nextExpression(true)
                 }
+                statement = _statement
+                // stash()
+                break;
+              case '*':
+              case '/':
+                preCurToken = curToken
+                const divisor = nextExpression(true)
+                const right = {
+                  left: statement.right,
+                  type: BinaryExpression,
+                  operator: preCurToken.value,
+                  right: divisor
+                }
+                statement.right = right
                 statement = _statement
                 // stash()
                 break;
@@ -594,7 +606,7 @@ function parse(tokens) {
   return ast;
 }
 
-const token = tokenize('for(var i=0;i<10;i++){}');
+const token = tokenize('var v = a()+"123"+ 1/3');
 const ast = parse(token);
 console.log(JSON.stringify(ast, null, 2))
 module.exports = {

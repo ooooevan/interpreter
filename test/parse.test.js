@@ -217,7 +217,6 @@ test('for(var i=0;i<10;i++){}', t => {
 test('var a = 1+b+a()', t => {
   const token = tokenize('var a = 1+b+a()');
   const ast = parse(token);
-  console.log(JSON.stringify(ast,null,2))
   t.deepEqual(ast, {
     type: 'Program',
     body: [{
@@ -251,6 +250,59 @@ test('var a = 1+b+a()', t => {
                 name: 'a'
               },
               arguments: []
+            }
+          }
+        },
+      ],
+      kind: 'var'
+    }, ]
+  })
+})
+test('var v = a()+"123"+ 1/3', t => {
+  const token = tokenize('var v = a()+"123"+ 1/3');
+  const ast = parse(token);
+  console.log(JSON.stringify(ast,null,2))
+  t.deepEqual(ast, {
+    type: 'Program',
+    body: [{
+      type: VariableDeclaration,
+      declarations: [
+        {
+          type: VariableDeclarator,
+          id: {
+            type: Identifier,
+            name: 'v'
+          },
+          init: {
+            type: BinaryExpression,
+            left: {
+              type: BinaryExpression,
+              left: {
+                type: CallExpression,
+                callee: {
+                  type: Identifier,
+                  name: 'a'
+                },
+                arguments: []
+              },
+              operator: '+',
+              right: {
+                type: StringLiteral,
+                value: '123'
+              }
+            },
+            operator: '+',
+            right: {
+              type: BinaryExpression,
+              left: {
+                type: NumericLiteral,
+                value: 1
+              },
+              operator:'/',
+              right: {
+                type: NumericLiteral,
+                value: 3
+              }
             }
           }
         },
