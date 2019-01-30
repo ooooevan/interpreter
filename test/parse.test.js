@@ -122,6 +122,34 @@ test('if', t => {
     }, ]
   })
 })
+test('if', t => {
+  const token = tokenize('console.log(123)');
+  const ast = parse(token);
+  t.deepEqual(ast, {
+    type: 'Program',
+    body: [{
+      type: ExpressionStatement,
+      expression: {
+        type: CallExpression,
+        callee: {
+          type: MemberExpression,
+          object: {
+            type: Identifier,
+            name: 'console'
+          },
+          property: {
+            type: Identifier,
+            name: 'log'
+          }
+        },
+        arguments: [{
+          type: NumericLiteral,
+          value: 123
+        }]
+      },
+    }, ]
+  })
+})
 test('var a=1,b=2,c', t => {
   const token = tokenize('var a=1,b=2,c');
   const ast = parse(token);
@@ -129,8 +157,7 @@ test('var a=1,b=2,c', t => {
     type: 'Program',
     body: [{
       type: VariableDeclaration,
-      declarations: [
-        {
+      declarations: [{
           type: VariableDeclarator,
           id: {
             type: Identifier,
@@ -194,10 +221,10 @@ test('for(var i=0;i<10;i++){}', t => {
           name: 'i',
         },
         operator: '<',
-          right: {
-            type: NumericLiteral,
-            value: 10
-          }
+        right: {
+          type: NumericLiteral,
+          value: 10
+        }
       },
       update: {
         type: UpdateExpression,
@@ -221,39 +248,37 @@ test('var a = 1+b+a()', t => {
     type: 'Program',
     body: [{
       type: VariableDeclaration,
-      declarations: [
-        {
-          type: VariableDeclarator,
-          id: {
-            type: Identifier,
-            name: 'a'
-          },
-          init: {
+      declarations: [{
+        type: VariableDeclarator,
+        id: {
+          type: Identifier,
+          name: 'a'
+        },
+        init: {
+          type: BinaryExpression,
+          left: {
             type: BinaryExpression,
             left: {
-              type: BinaryExpression,
-              left: {
-                type: NumericLiteral,
-                value: 1
-              },
-              operator: '+',
-              right: {
-                type: Identifier,
-                name: 'b'
-              }
+              type: NumericLiteral,
+              value: 1
             },
             operator: '+',
             right: {
-              type: CallExpression,
-              callee: {
-                type: Identifier,
-                name: 'a'
-              },
-              arguments: []
+              type: Identifier,
+              name: 'b'
             }
+          },
+          operator: '+',
+          right: {
+            type: CallExpression,
+            callee: {
+              type: Identifier,
+              name: 'a'
+            },
+            arguments: []
           }
-        },
-      ],
+        }
+      }, ],
       kind: 'var'
     }, ]
   })
@@ -261,52 +286,49 @@ test('var a = 1+b+a()', t => {
 test('var v = a()+"123"+ 1/3', t => {
   const token = tokenize('var v = a()+"123"+ 1/3');
   const ast = parse(token);
-  console.log(JSON.stringify(ast,null,2))
   t.deepEqual(ast, {
     type: 'Program',
     body: [{
       type: VariableDeclaration,
-      declarations: [
-        {
-          type: VariableDeclarator,
-          id: {
-            type: Identifier,
-            name: 'v'
-          },
-          init: {
+      declarations: [{
+        type: VariableDeclarator,
+        id: {
+          type: Identifier,
+          name: 'v'
+        },
+        init: {
+          type: BinaryExpression,
+          left: {
             type: BinaryExpression,
             left: {
-              type: BinaryExpression,
-              left: {
-                type: CallExpression,
-                callee: {
-                  type: Identifier,
-                  name: 'a'
-                },
-                arguments: []
+              type: CallExpression,
+              callee: {
+                type: Identifier,
+                name: 'a'
               },
-              operator: '+',
-              right: {
-                type: StringLiteral,
-                value: '123'
-              }
+              arguments: []
             },
             operator: '+',
             right: {
-              type: BinaryExpression,
-              left: {
-                type: NumericLiteral,
-                value: 1
-              },
-              operator:'/',
-              right: {
-                type: NumericLiteral,
-                value: 3
-              }
+              type: StringLiteral,
+              value: '123'
+            }
+          },
+          operator: '+',
+          right: {
+            type: BinaryExpression,
+            left: {
+              type: NumericLiteral,
+              value: 1
+            },
+            operator: '/',
+            right: {
+              type: NumericLiteral,
+              value: 3
             }
           }
-        },
-      ],
+        }
+      }, ],
       kind: 'var'
     }, ]
   })

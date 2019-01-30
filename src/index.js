@@ -1,9 +1,15 @@
-const tokenize = require('./tokenize');
-const parse = require('./parse');
-const run = require('./run');
+const {
+    tokenize
+} = require('./tokenize');
+const {
+    parse
+} = require('./parse');
+const {
+    NodeIterator
+} = require('./run');
 
 module.exports = {
     tokenize,
     parse,
-    run
+    run: NodeIterator
 }

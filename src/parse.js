@@ -397,6 +397,16 @@ function parse(tokens) {
                   object: statement,
                   property: nextExpression(true)
                 }
+                // 如果成员是函数则类型要变，结构也变
+                if(_statement.property.type === CallExpression){
+                  const mem = _statement.property.callee
+                  _statement =_statement.property
+                  _statement.callee = {
+                    type: MemberExpression,
+                    object: statement,
+                    property: mem
+                  }
+                }
                 statement = _statement
                 break;
               case '(':
@@ -606,9 +616,6 @@ function parse(tokens) {
   return ast;
 }
 
-const token = tokenize('var v = a()+"123"+ 1/3');
-const ast = parse(token);
-console.log(JSON.stringify(ast, null, 2))
 module.exports = {
   parse,
   VariableDeclaration,

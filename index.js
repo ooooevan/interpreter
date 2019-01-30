@@ -1,17 +1,19 @@
-// const recast = require("recast");
-const MyInter = require('./src/index');
-
+const {
+  tokenize,
+  parse,
+  run
+} = require('./src/index');
+const {
+  runInContext,
+  createContext
+} = require('./vm/index');
 const code = `
-  function square(a) {
-    console.log(a);
-  }
-  square()
+  console.log(123);
   `
+const token = tokenize(code);
+const ast = parse(token);
+run.traverse(ast, {
+  console
+})
 
-const tokens = MyInter.tokenize(code);
-const ast = MyInter.parse(tokens);
-const run = MyInter.run(ast, {console});
-
-// const ast = recast.parse(code);
-// console.log(JSON.stringify(ast.program.body, undefined, 2))
-// console.log( recast.prettyPrint(ast, { tabWidth: 2 }).code)
+runInContext(code, createContext({}))
